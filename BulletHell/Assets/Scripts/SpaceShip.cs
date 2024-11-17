@@ -1,23 +1,30 @@
-using System.Collections;
 using UnityEngine;
 
 public class SpaceShip : MonoBehaviour
 {
-    private bool isHit = false; // Verifica si la nave fue golpeada
+    public GameObject explosionEffect; // Efecto visual de explosión
+    public Camera cameraController; // Referencia al controlador de la cámara
 
     void OnCollisionEnter(Collision collision)
     {
-        if (!isHit) // Solo iniciar el temporizador si aún no fue golpeada
+        // Instanciar efecto de explosión
+        if (explosionEffect != null)
         {
-            isHit = true;
-            StartCoroutine(DestroyAfterDelay(3f)); // Llama a la corrutina con un retraso de 3 segundos
+            Instantiate(explosionEffect, transform.position, transform.rotation);
         }
-    }
 
-    private IEnumerator DestroyAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay); // Espera el tiempo definido
-        Destroy(gameObject); // Destruye la nave
+        // Activar el movimiento de la cámara
+        if (cameraController != null)
+        {
+            Debug.Log("Iniciando movimiento de la cámara desde el script de la nave.");
+            cameraController.TriggerCameraMove();
+        }
+        else
+        {
+            Debug.LogError("CameraController no está asignado en el Inspector.");
+        }
+
+        // Destruir la nave instantáneamente
+        Destroy(gameObject);
     }
 }
-

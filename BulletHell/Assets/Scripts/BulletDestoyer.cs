@@ -1,7 +1,6 @@
 using UnityEngine;
 
-public class BulletDestoyer : MonoBehaviour
-
+public class BulletDestroyer : MonoBehaviour
 {
     public float boundary = 20f; // Límite para destruir la bala
 
@@ -13,5 +12,10 @@ public class BulletDestoyer : MonoBehaviour
             Destroy(gameObject); // Destruye la bala
         }
     }
-}
 
+    void OnCollisionEnter(Collision collision)
+    {
+        // Destruir la bala al chocar con cualquier objeto
+        Destroy(gameObject);
+    }
+}
