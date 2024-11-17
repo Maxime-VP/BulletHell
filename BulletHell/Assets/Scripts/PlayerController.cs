@@ -2,9 +2,10 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 10f; // Velocidad de movimiento
-    public float tiltAmount = 15f; // Ángulo máximo de inclinación
-    public float tiltSpeed = 5f; // Velocidad de inclinación
+    public float horizontalSpeed = 10f; // Velocidad de movimiento lateral
+    public float verticalSpeed = 15f;   // Velocidad de movimiento arriba/abajo
+    public float tiltAmount = 15f;      // Ángulo máximo de inclinación
+    public float tiltSpeed = 5f;        // Velocidad de inclinación
 
     void Update()
     {
@@ -12,8 +13,12 @@ public class PlayerController : MonoBehaviour
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
 
-        // Calcula el movimiento
-        Vector3 movement = new Vector3(horizontal, 0, vertical) * speed * Time.deltaTime;
+        // Calcula el movimiento separado por velocidad horizontal y vertical
+        Vector3 horizontalMovement = new Vector3(horizontal, 0, 0) * horizontalSpeed * Time.deltaTime;
+        Vector3 verticalMovement = new Vector3(0, 0, vertical) * verticalSpeed * Time.deltaTime;
+
+        // Suma ambos movimientos
+        Vector3 movement = horizontalMovement + verticalMovement;
 
         // Aplica el movimiento
         transform.Translate(movement, Space.World);
