@@ -4,112 +4,118 @@ using UnityEngine.UI;
 
 public class BossController : MonoBehaviour
 {
-    public GameObject bulletPrefab; // Prefab de las balas
-    public Transform[] firePoints; // Puntos de disparo
-    public Text bulletCounterText; // Contador de balas activas
-    public float modeDuration = 10f; // Duración de cada modo
-    public float bulletSpeed = 10f; // Velocidad de las balas
+    // Configuración de disparo
+    public GameObject bulletPrefab;
+    public Transform[] firePointsPhase1;
+    public Transform[] firePointsPhase2;
+    public Transform[] firePointsPhase3;
+    public float fireRatePhase1 = 1f;
+    public float fireRatePhase2 = 0.5f;
+    public float fireRatePhase3 = 0.3f;
+    public float modeDuration = 10f;
+    public float bulletSpeed = 10f;
 
-    private int activeMode = 0; // Modo actual (0, 1 o 2)
-    private int activeBullets = 0; // Contador de balas activas
+    // Configuración de vida
+    public int maxHealth = 100;
+    public Text healthCounterText;
+    public GameObject explosionEffect;
+
+    // Contador de balas
+    public BulletCounter bulletCounter;
+
+    private int currentHealth;
+    private int currentPhaseIndex = 0; // Índice actual para el orden personalizado
+    private int[] phaseOrder = { 1, 3, 2 }; // Orden personalizado de fases
     private Coroutine currentShootingRoutine;
+    private bool canTakeDamage = false;
 
     void Start()
     {
-        // Iniciar el cambio de modos y el patrón de disparo
+        enabled = false; // Desactivar hasta que se active
+    }
+
+    public void ActivateBoss()
+    {
+        enabled = true;
+        currentHealth = maxHealth;
+        UpdateHealthUI();
+        canTakeDamage = true;
         StartCoroutine(ChangeModes());
     }
 
     void Update()
     {
-        // Actualizar el texto del contador de balas
-        bulletCounterText.text = $"Bullets: {activeBullets}";
+        UpdateHealthUI();
     }
 
     private IEnumerator ChangeModes()
     {
         while (true)
         {
-            // Cambiar al siguiente modo
-            activeMode = (activeMode + 1) % 3;
-
-            // Detener cualquier patrón previo de disparo
             if (currentShootingRoutine != null)
             {
                 StopCoroutine(currentShootingRoutine);
             }
 
-            // Iniciar el patrón de disparo correspondiente al modo
-            currentShootingRoutine = StartCoroutine(ShootingPattern(activeMode));
+            // Cambiar de fase según el orden personalizado
+            currentPhaseIndex = (currentPhaseIndex + 1) % phaseOrder.Length;
+            int currentPhase = phaseOrder[currentPhaseIndex];
+            currentShootingRoutine = StartCoroutine(ShootingPattern(currentPhase));
 
-            // Esperar la duración del modo
             yield return new WaitForSeconds(modeDuration);
         }
     }
 
-    private IEnumerator ShootingPattern(int mode)
+    private IEnumerator ShootingPattern(int phase)
     {
+        Transform[] activeFirePoints = GetFirePointsForPhase(phase);
+        float fireRate = GetFireRateForPhase(phase);
+
         while (true)
         {
-            switch (mode)
+            foreach (var firePoint in activeFirePoints)
             {
-                case 0:
-                    yield return StartCoroutine(SpiralPattern());
-                    break;
-                case 1:
-                    yield return StartCoroutine(WavePattern());
-                    break;
-                case 2:
-                    yield return StartCoroutine(RandomPattern());
-                    break;
+                if (phase == 3) // Disparo con ángulo aleatorio para la fase 3
+                {
+                    SpawnBulletWithAngle(firePoint.position, Vector3.back);
+                }
+                else // Disparo recto para las otras fases
+                {
+                    SpawnBullet(firePoint.position, Vector3.back);
+                }
             }
+
+            yield return new WaitForSeconds(fireRate); // Usar el fireRate correspondiente
         }
     }
 
-    private IEnumerator SpiralPattern()
+    private Transform[] GetFirePointsForPhase(int phase)
     {
-        float angle = 0f;
-        while (true)
+        switch (phase)
         {
-            for (int i = 0; i < firePoints.Length; i++)
-            {
-                // Disparos en espiral hacia abajo
-                Vector3 direction = Quaternion.Euler(0, angle, 0) * Vector3.down;
-                SpawnBullet(firePoints[i].position, direction);
-            }
-
-            angle += 45f; // Incrementar el ángulo para el efecto espiral
-            yield return new WaitForSeconds(0.1f);
+            case 1:
+                return firePointsPhase1;
+            case 2:
+                return firePointsPhase2;
+            case 3:
+                return firePointsPhase3;
+            default:
+                return firePointsPhase1;
         }
     }
 
-    private IEnumerator WavePattern()
+    private float GetFireRateForPhase(int phase)
     {
-        while (true)
+        switch (phase)
         {
-            for (int i = 0; i < firePoints.Length; i++)
-            {
-                // Onda en movimiento vertical
-                Vector3 direction = Vector3.down + new Vector3(Mathf.Sin(Time.time * 2), 0, 0);
-                SpawnBullet(firePoints[i].position, direction.normalized);
-            }
-
-            yield return new WaitForSeconds(0.2f);
-        }
-    }
-
-    private IEnumerator RandomPattern()
-    {
-        while (true)
-        {
-            for (int i = 0; i < firePoints.Length; i++)
-            {
-                // Dirección aleatoria hacia abajo
-                Vector3 randomDirection = new Vector3(Random.Range(-0.5f, 0.5f), -1f, Random.Range(-0.5f, 0.5f)).normalized;
-                SpawnBullet(firePoints[i].position, randomDirection);
-            }
-
-            yield return new WaitForSeconds(0.3f);
+            case 1:
+                return fireRatePhase1;
+            case 2:
+                return fireRatePhase2;
+            case 3:
+                return fireRatePhase3;
+            default:
+                return fireRatePhase1;
         }
     }
 
@@ -120,10 +126,9 @@ public class BossController : MonoBehaviour
 
         if (rb != null)
         {
-            rb.linearVelocity = direction * bulletSpeed; // Configurar la velocidad de la bala
+            rb.linearVelocity = direction * bulletSpeed; // Usar linearVelocity para disparar en el eje Z negativo
         }
 
-        // Evitar que las balas colisionen con la nave
         Collider bulletCollider = bullet.GetComponent<Collider>();
         Collider bossCollider = GetComponent<Collider>();
 
@@ -132,10 +137,34 @@ public class BossController : MonoBehaviour
             Physics.IgnoreCollision(bulletCollider, bossCollider);
         }
 
-        // Incrementar el contador de balas activas
-        activeBullets++;
+        bulletCounter?.IncrementBullet();
+        Destroy(bullet, 5f);
+        StartCoroutine(DecrementBulletCounterAfterDelay(5f));
+    }
 
-        // Destruir la bala después de 5 segundos y decrementar el contador
+    private void SpawnBulletWithAngle(Vector3 position, Vector3 direction)
+    {
+        float randomAngle = Random.Range(-60f, 60f); // Generar ángulo aleatorio entre -60 y 60 grados
+        Quaternion rotation = Quaternion.Euler(0, randomAngle, 0); // Rotar sobre el eje Y
+        Vector3 rotatedDirection = rotation * direction; // Aplicar la rotación a la dirección original
+
+        GameObject bullet = Instantiate(bulletPrefab, position, Quaternion.identity);
+        Rigidbody rb = bullet.GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            rb.linearVelocity = rotatedDirection * bulletSpeed;
+        }
+
+        Collider bulletCollider = bullet.GetComponent<Collider>();
+        Collider bossCollider = GetComponent<Collider>();
+
+        if (bulletCollider != null && bossCollider != null)
+        {
+            Physics.IgnoreCollision(bulletCollider, bossCollider);
+        }
+
+        bulletCounter?.IncrementBullet();
         Destroy(bullet, 5f);
         StartCoroutine(DecrementBulletCounterAfterDelay(5f));
     }
@@ -143,6 +172,37 @@ public class BossController : MonoBehaviour
     private IEnumerator DecrementBulletCounterAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        activeBullets--;
+        bulletCounter?.DecrementBullet();
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (!canTakeDamage) return;
+
+        currentHealth -= damage;
+        UpdateHealthUI();
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void UpdateHealthUI()
+    {
+        if (healthCounterText != null)
+        {
+            healthCounterText.text = $"Health: {currentHealth}";
+        }
+    }
+
+    private void Die()
+    {
+        if (explosionEffect != null)
+        {
+            Instantiate(explosionEffect, transform.position, transform.rotation);
+        }
+
+        Destroy(gameObject);
     }
 }

@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8583781320220580845}
   - component: {fileID: 306641137480016521}
   - component: {fileID: 8670141954766937346}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Bullet long
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -166,3 +166,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boundary: 25
+  damage: 10
+  destructionEffect: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}

@@ -12,10 +12,10 @@ TagManager:
   - 
   - Water
   - UI
-  - Bullets
-  - 
-  - 
-  - 
+  - AlienBullets
+  - Player
+  - PlayerBullets
+  - AlienShips
   - 
   - 
   - 
