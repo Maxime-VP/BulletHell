@@ -29,6 +29,10 @@ public class BossController : MonoBehaviour
     private Coroutine currentShootingRoutine;
     private bool canTakeDamage = false;
 
+    // Variables para el disparo incremental
+    private float currentAngle = -60f; // Ángulo inicial para fase 1
+    private const float angleIncrement = 15f; // Incremento del ángulo
+
     void Start()
     {
         enabled = false; // Desactivar hasta que se active
@@ -75,7 +79,11 @@ public class BossController : MonoBehaviour
         {
             foreach (var firePoint in activeFirePoints)
             {
-                if (phase == 3) // Disparo con ángulo aleatorio para la fase 3
+                if (phase == 1) // Disparo incremental para la fase 1
+                {
+                    SpawnBulletWithIncrementalAngle(firePoint.position, Vector3.back);
+                }
+                else if (phase == 3) // Disparo con ángulo aleatorio para la fase 3
                 {
                     SpawnBulletWithAngle(firePoint.position, Vector3.back);
                 }
@@ -162,6 +170,40 @@ public class BossController : MonoBehaviour
         if (bulletCollider != null && bossCollider != null)
         {
             Physics.IgnoreCollision(bulletCollider, bossCollider);
+        }
+
+        bulletCounter?.IncrementBullet();
+        Destroy(bullet, 5f);
+        StartCoroutine(DecrementBulletCounterAfterDelay(5f));
+    }
+
+    private void SpawnBulletWithIncrementalAngle(Vector3 position, Vector3 direction)
+    {
+        // Aplicar el ángulo actual
+        Quaternion rotation = Quaternion.Euler(0, currentAngle, 0); // Rotar sobre el eje Y
+        Vector3 rotatedDirection = rotation * direction; // Aplicar la rotación a la dirección original
+
+        GameObject bullet = Instantiate(bulletPrefab, position, Quaternion.identity);
+        Rigidbody rb = bullet.GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            rb.linearVelocity = rotatedDirection * bulletSpeed;
+        }
+
+        Collider bulletCollider = bullet.GetComponent<Collider>();
+        Collider bossCollider = GetComponent<Collider>();
+
+        if (bulletCollider != null && bossCollider != null)
+        {
+            Physics.IgnoreCollision(bulletCollider, bossCollider);
+        }
+
+        // Incrementar el ángulo
+        currentAngle += angleIncrement;
+        if (currentAngle > 60f)
+        {
+            currentAngle = -60f; // Reiniciar al ángulo inicial
         }
 
         bulletCounter?.IncrementBullet();
