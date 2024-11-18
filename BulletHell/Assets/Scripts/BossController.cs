@@ -15,6 +15,11 @@ public class BossController : MonoBehaviour
     public float modeDuration = 10f;
     public float bulletSpeed = 10f;
 
+    // Configuración de movimiento
+    public float movementSpeed = 8f; // Velocidad de movimiento durante la fase 2
+    public float movementDurationLeftToRight = 2.5f;
+    public float movementDurationRightToLeft = 5f;
+
     // Configuración de vida
     public int maxHealth = 100;
     public Text healthCounterText;
@@ -75,6 +80,12 @@ public class BossController : MonoBehaviour
         Transform[] activeFirePoints = GetFirePointsForPhase(phase);
         float fireRate = GetFireRateForPhase(phase);
 
+        if (phase == 2)
+        {
+            // Iniciar el patrón de movimiento mientras dispara
+            StartCoroutine(MoveBossPattern());
+        }
+
         while (true)
         {
             foreach (var firePoint in activeFirePoints)
@@ -87,7 +98,7 @@ public class BossController : MonoBehaviour
                 {
                     SpawnBulletWithAngle(firePoint.position, Vector3.back);
                 }
-                else // Disparo recto para las otras fases
+                else // Disparo recto para la fase 2
                 {
                     SpawnBullet(firePoint.position, Vector3.back);
                 }
@@ -95,6 +106,38 @@ public class BossController : MonoBehaviour
 
             yield return new WaitForSeconds(fireRate); // Usar el fireRate correspondiente
         }
+    }
+
+    private IEnumerator MoveBossPattern()
+    {
+        // Calcular límites basados en la posición inicial
+        Vector3 initialPosition = transform.position;
+        Vector3 leftLimit = initialPosition + Vector3.left * 10f;
+        Vector3 rightLimit = initialPosition + Vector3.right * 10f;
+
+        // Movimiento de izquierda a derecha (2.5 segundos)
+        yield return MoveBetweenPoints(initialPosition, rightLimit, movementDurationLeftToRight);
+
+        // Movimiento de derecha a izquierda (5 segundos)
+        yield return MoveBetweenPoints(rightLimit, leftLimit, movementDurationRightToLeft);
+
+        // Movimiento de vuelta a la posición inicial (2.5 segundos)
+        yield return MoveBetweenPoints(leftLimit, initialPosition, movementDurationLeftToRight);
+
+    }
+
+    private IEnumerator MoveBetweenPoints(Vector3 startPoint, Vector3 endPoint, float duration)
+    {
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            transform.position = Vector3.Lerp(startPoint, endPoint, elapsed / duration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.position = endPoint; // Asegurarse de terminar exactamente en el punto final
     }
 
     private Transform[] GetFirePointsForPhase(int phase)
@@ -134,7 +177,7 @@ public class BossController : MonoBehaviour
 
         if (rb != null)
         {
-            rb.linearVelocity = direction * bulletSpeed; // Usar linearVelocity para disparar en el eje Z negativo
+            rb.linearVelocity = direction * bulletSpeed;
         }
 
         Collider bulletCollider = bullet.GetComponent<Collider>();
@@ -152,9 +195,9 @@ public class BossController : MonoBehaviour
 
     private void SpawnBulletWithAngle(Vector3 position, Vector3 direction)
     {
-        float randomAngle = Random.Range(-60f, 60f); // Generar ángulo aleatorio entre -60 y 60 grados
-        Quaternion rotation = Quaternion.Euler(0, randomAngle, 0); // Rotar sobre el eje Y
-        Vector3 rotatedDirection = rotation * direction; // Aplicar la rotación a la dirección original
+        float randomAngle = Random.Range(-60f, 60f);
+        Quaternion rotation = Quaternion.Euler(0, randomAngle, 0);
+        Vector3 rotatedDirection = rotation * direction;
 
         GameObject bullet = Instantiate(bulletPrefab, position, Quaternion.identity);
         Rigidbody rb = bullet.GetComponent<Rigidbody>();
@@ -179,9 +222,8 @@ public class BossController : MonoBehaviour
 
     private void SpawnBulletWithIncrementalAngle(Vector3 position, Vector3 direction)
     {
-        // Aplicar el ángulo actual
-        Quaternion rotation = Quaternion.Euler(0, currentAngle, 0); // Rotar sobre el eje Y
-        Vector3 rotatedDirection = rotation * direction; // Aplicar la rotación a la dirección original
+        Quaternion rotation = Quaternion.Euler(0, currentAngle, 0);
+        Vector3 rotatedDirection = rotation * direction;
 
         GameObject bullet = Instantiate(bulletPrefab, position, Quaternion.identity);
         Rigidbody rb = bullet.GetComponent<Rigidbody>();
@@ -199,11 +241,10 @@ public class BossController : MonoBehaviour
             Physics.IgnoreCollision(bulletCollider, bossCollider);
         }
 
-        // Incrementar el ángulo
         currentAngle += angleIncrement;
         if (currentAngle > 60f)
         {
-            currentAngle = -60f; // Reiniciar al ángulo inicial
+            currentAngle = -60f;
         }
 
         bulletCounter?.IncrementBullet();
