@@ -36,7 +36,7 @@ public class BossController : MonoBehaviour
 
     // Variables para el disparo incremental
     private float currentAngle = -60f; // Ángulo inicial para fase 1
-    private const float angleIncrement = 15f; // Incremento del ángulo
+    private const float angleIncrement = 10f; // Incremento del ángulo
 
     void Start()
     {
@@ -281,6 +281,13 @@ public class BossController : MonoBehaviour
 
     private void Die()
     {
+        Debug.Log("El jefe ha sido derrotado.");
+        PlayerController player = FindObjectOfType<PlayerController>();
+        if (player != null)
+        {
+            player.ShowEndGameText("Victory");
+        }
+
         if (explosionEffect != null)
         {
             Instantiate(explosionEffect, transform.position, transform.rotation);

@@ -14,7 +14,8 @@ GameObject:
   - component: {fileID: 4512920234129787811}
   - component: {fileID: 1925969428660947812}
   - component: {fileID: 8931706575051802060}
-  m_Layer: 0
+  - component: {fileID: -5799028673202926432}
+  m_Layer: 6
   m_Name: Alien Bullet
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -150,3 +151,17 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &-5799028673202926432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 374250326143235562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7f5f64784bb1034f8d16d79108dbc87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 10
+  destructionEffect: {fileID: 1141330259687333427, guid: 6718dc24203da53468af9ada8fef7d6d, type: 3}
